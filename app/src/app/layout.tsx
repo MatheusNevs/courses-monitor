@@ -2,10 +2,12 @@ import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
+import { SessionProvider } from "next-auth/react";
+import NavBar from "components/navbar";
 
 export const metadata: Metadata = {
-  title: "Monitoramento de Cursos",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  title: "UnB Matrículas",
+  icons: [{ rel: "icon", url: "/favicon.png" }],
 };
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body>{children}</body>
+      <body className="min-w-screen px-16 py-12">
+        <SessionProvider>
+          <NavBar />
+          {children}
+        </SessionProvider>
+      </body>
     </html>
   );
 }
