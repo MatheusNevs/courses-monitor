@@ -55,14 +55,15 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+    id               String             @id @default(cuid())
+    name             String?
+    email            String?            @unique
+    emailVerified    DateTime?
+    image            String?
+    accounts         Account[]
+    sessions         Session[]
+    posts            Post[]
+    DesiredDeparment DesiredDeparment[]
 }
 
 model VerificationToken {
@@ -71,4 +72,24 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model DesiredDeparment {
+    id             String           @id @default(cuid())
+    userId         String
+    user           User             @relation(fields: [userId], references: [id])
+    DesiredSubject DesiredSubject[]
+}
+
+model DesiredSubject {
+    id           String           @id @default(cuid())
+    departmentId String
+    department   DesiredDeparment @relation(fields: [departmentId], references: [id])
+    DesiredClass DesiredClass[]
+}
+
+model DesiredClass {
+    id        String         @id @default(cuid())
+    subjectId String
+    subject   DesiredSubject @relation(fields: [subjectId], references: [id])
 }
