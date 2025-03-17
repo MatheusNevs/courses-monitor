@@ -29,8 +29,8 @@ export default async function middleware(request: NextRequest) {
     );
     const session: Session = (await sessionResponse.json()) as Session;
 
-    if (session?.user?.email) {
-      requestHeaders.set("x-user-email", session.user.email);
+    if (session?.user?.id) {
+      requestHeaders.set("x-user-id", session.user.id);
       return NextResponse.next({
         request: {
           headers: requestHeaders,
@@ -40,7 +40,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // If neither auth method works, return unauthorized
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 }
 
 export const config = {
