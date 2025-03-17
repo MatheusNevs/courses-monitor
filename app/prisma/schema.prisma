@@ -76,6 +76,7 @@ model VerificationToken {
 
 model DesiredDeparment {
     id             String           @id @default(cuid())
+    name           String
     userId         String
     user           User             @relation(fields: [userId], references: [id])
     DesiredSubject DesiredSubject[]
@@ -83,6 +84,7 @@ model DesiredDeparment {
 
 model DesiredSubject {
     id           String           @id @default(cuid())
+    name         String
     departmentId String
     department   DesiredDeparment @relation(fields: [departmentId], references: [id])
     DesiredClass DesiredClass[]
@@ -90,6 +92,7 @@ model DesiredSubject {
 
 model DesiredClass {
     id        String         @id @default(cuid())
+    number    String
     subjectId String
     subject   DesiredSubject @relation(fields: [subjectId], references: [id])
 }
