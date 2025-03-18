@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from dotenv import load_dotenv
+import requests
 
 
 @dataclass
@@ -46,9 +47,7 @@ class UnbCourseMonitor:
             return
 
     def select_department(self, department: str) -> None:
-        select = Select(
-            self.driver.find_element(By.NAME, "formTurma:inputDepto")
-        )
+        select = Select(self.driver.find_element(By.NAME, "formTurma:inputDepto"))
         select.select_by_visible_text(department)
 
         search_button = self.driver.find_element(
@@ -56,9 +55,7 @@ class UnbCourseMonitor:
         )
         self.driver.execute_script("arguments[0].click();", search_button)
 
-    def get_available_courses(
-        self, courses_dict: Dict[str, str]
-    ) -> List[Course]:
+    def get_available_courses(self, courses_dict: Dict[str, str]) -> List[Course]:
         available_courses = []
         current_course = None
 
@@ -109,9 +106,7 @@ class UnbCourseMonitor:
         self, department: str, courses: Dict[str, str], user_email: str
     ) -> None:
         try:
-            self.driver.get(
-                "https://sigaa.unb.br/sigaa/public/turmas/listar.jsf"
-            )
+            self.driver.get("https://sigaa.unb.br/sigaa/public/turmas/listar.jsf")
 
             self.close_cookie_popup()
             self.select_department(department)
@@ -126,8 +121,7 @@ class UnbCourseMonitor:
 
             if available_courses:
                 messages = [
-                    self._format_course_message(course)
-                    for course in available_courses
+                    self._format_course_message(course) for course in available_courses
                 ]
                 self.email_sender.send_email(
                     user_email, messages, "Availabe Seats in Courses"
@@ -181,29 +175,43 @@ def main():
     password = os.getenv("EMAIL_PASSWORD")
 
     if not email or not password:
-        raise ValueError(
-            "Email and password environment variables must be set"
-        )
+        raise ValueError("Email and password environment variables must be set")
 
     email_sender = EmailSender(email, password)
     monitor = UnbCourseMonitor(email_sender)
 
-    courses = {
-        "CIC0099 - ORGANIZAÇÃO E ARQUITETURA DE COMPUTADORES": "03",
-        "CIC0101 - SISTEMAS DE INFORMACAO": "01",
-        "CIC0087 - TOPICOS AVANCADOS EM COMPUTADORES": "03",
-    }
-
-    department = "DEPTO CIÊNCIAS DA COMPUTAÇÃO - BRASÍLIA"
-    user_email = os.getenv(
-        "USER_EMAIL"
-    )  # Tem que ser pego pelo banco de dados
-
-    if not user_email:
-        raise ValueError("User email environment variable must be set")
+    admin_token = os.getenv("ADMIN_TOKEN")
+    if not admin_token:
+        raise ValueError("Admin token environment variable must be set")
 
     while True:
-        monitor.check_seats(department, courses, user_email)
+        response = requests.get(
+            "http://localhost:3000/api/desiredClass",
+            cookies={"authjs.session-token": admin_token},
+            timeout=30,
+        )
+
+        if response.status_code != 200:
+            print(f"Error fetching data: {response.status_code}")
+            time.sleep(300)
+            continue
+
+        users_data = response.json()
+
+        for user in users_data:
+            email = user["email"]
+            for department in user["departments"]:
+                dept_name = department["name"]
+                courses = {}
+
+                for subject in department["subjects"]:
+                    subject_name = subject["name"]
+                    for class_info in subject["classes"]:
+                        courses[subject_name] = class_info["number"]
+
+                if courses:
+                    monitor.check_seats(dept_name, courses, email)
+
         time.sleep(300)
 
 
