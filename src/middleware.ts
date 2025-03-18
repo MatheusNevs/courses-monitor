@@ -20,11 +20,14 @@ export default async function middleware(request: NextRequest) {
 
   // If not admin, check for regular session
   if (token) {
-    const { data: session } = await axios.get<Session>("/api/auth/session", {
-      headers: {
-        Cookie: `__Secure-authjs.session-token=${token.value}`,
+    const { data: session } = await axios.get<Session>(
+      `${request.nextUrl.origin}/api/auth/session`,
+      {
+        headers: {
+          Cookie: `__Secure-authjs.session-token=${token.value}`,
+        },
       },
-    });
+    );
 
     if (session?.user?.id) {
       requestHeaders.set("x-user-id", session.user.id);
