@@ -1,14 +1,26 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 
+type UserWithClass = {
+  email: string;
+  departments: {
+    name: string;
+    subjects: {
+      name: string;
+      classes: {
+        number: string;
+      }[];
+    }[];
+  }[];
+};
+
 export async function POST(request: NextRequest) {
-  console.log("entrou no post ");
   const userId = request.headers.get("x-user-id");
 
   if (!userId) {
-    console.log("unauthorized");
-    return NextResponse.json({ message: "UNAUTHORIZED" });
+    return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
   }
 
   const desiredClassJSON = z.object({
@@ -19,12 +31,10 @@ export async function POST(request: NextRequest) {
 
   const body: z.infer<typeof desiredClassJSON> =
     (await request.json()) as z.infer<typeof desiredClassJSON>;
-  console.log(body);
   const parsedResult = desiredClassJSON.safeParse(body);
 
   if (parsedResult.error) {
-    console.log("invalid body");
-    return NextResponse.json({ message: "INVALID BODY" });
+    return NextResponse.json({ message: "INVALID BODY" }, { status: 400 });
   }
 
   const { data } = parsedResult;
@@ -51,7 +61,7 @@ export async function POST(request: NextRequest) {
         subjectId: existingSubject.id,
       },
     });
-    return NextResponse.json({ message: "SUCESS" });
+    return NextResponse.json({}, { status: 200 });
   }
 
   const existingDepartment = await db.desiredDeparment.findFirst({
@@ -82,7 +92,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ message: "SUCESS" });
+    return NextResponse.json({}, { status: 200 });
   }
 
   const createdDepartment = await db.desiredDeparment.create({
@@ -106,5 +116,65 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ message: "SUCESS" });
+  return NextResponse.json({}, { status: 200 });
+}
+
+export async function GET(request: NextRequest) {
+  const isAdmin = request.headers.get("x-admin");
+  const userId = request.headers.get("x-user-id");
+
+  if (!isAdmin && !userId) {
+    return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  let usersWithClasses;
+
+  if (isAdmin) {
+    usersWithClasses = await db.user.findMany({
+      include: {
+        DesiredDeparment: {
+          include: {
+            DesiredSubject: {
+              include: {
+                DesiredClass: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  } else {
+    usersWithClasses = await db.user.findMany({
+      where: {
+        id: userId!,
+      },
+      include: {
+        DesiredDeparment: {
+          include: {
+            DesiredSubject: {
+              include: {
+                DesiredClass: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+  const formattedUsersWithClasses: UserWithClass[] = usersWithClasses.map(
+    (user) => ({
+      email: user.email!,
+      departments: user.DesiredDeparment.map((department) => ({
+        name: department.name,
+        subjects: department.DesiredSubject.map((subject) => ({
+          name: subject.name,
+          classes: subject.DesiredClass.map((classNumber) => ({
+            number: classNumber.number,
+          })),
+        })),
+      })),
+    }),
+  );
+
+  return NextResponse.json(formattedUsersWithClasses, { status: 200 });
 }

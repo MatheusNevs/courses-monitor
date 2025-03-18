@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
+import axios, { AxiosError } from "axios";
 
 export default function CreateMonitor() {
   const [formData, setFormData] = useState({
@@ -11,18 +12,12 @@ export default function CreateMonitor() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await fetch("http://localhost:3000/api/desiredClass/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    const data = await result.json();
-    if (data.message === "SUCESS") {
+    try {
+      await axios.post("/api/desiredClass", formData);
       toast.success("Monitoramento criado com sucesso");
-    } else {
-      toast.error(`Erro ao criar monitoramento: ${data.message}`);
+    } catch (e) {
+      if (e instanceof AxiosError)
+        toast.error(`Erro ao criar monitoramento: ${e.code}`);
     }
   };
 
@@ -79,16 +74,13 @@ export default function CreateMonitor() {
             />
           </div>
           <div>
-            <label
-              htmlFor="className"
-              className="mb-3 block text-lg text-gray-700"
-            >
+            <label htmlFor="class" className="mb-3 block text-lg text-gray-700">
               Turma
             </label>
             <input
               type="text"
-              id="className"
-              name="className"
+              id="class"
+              name="class"
               value={formData.class}
               onChange={handleChange}
               className="w-full rounded border border-gray-300 bg-white px-6 py-3 text-lg text-gray-800 focus:border-blue-900 focus:outline-none"
