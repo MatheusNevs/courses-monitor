@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
+import axios from "axios";
 
 export default async function middleware(request: NextRequest) {
   const token = request.cookies.get("__Secure-authjs.session-token");
@@ -19,15 +20,11 @@ export default async function middleware(request: NextRequest) {
 
   // If not admin, check for regular session
   if (token) {
-    const sessionResponse = await fetch(
-      "http://localhost:3000/api/auth/session",
-      {
-        headers: {
-          Cookie: `__Secure-authjs.session-token=${token.value}`,
-        },
+    const { data: session } = await axios.get<Session>("/api/auth/session", {
+      headers: {
+        Cookie: `__Secure-authjs.session-token=${token.value}`,
       },
-    );
-    const session: Session = (await sessionResponse.json()) as Session;
+    });
 
     if (session?.user?.id) {
       requestHeaders.set("x-user-id", session.user.id);

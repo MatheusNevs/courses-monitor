@@ -198,7 +198,7 @@ def main():
     while True:
         try:
             response = requests.get(
-                "http://localhost:3000/api/desiredClass",
+                "https://courses-monitor.netlify.app/api/desiredClass",
                 cookies={"__Secure-authjs.session-token": admin_token},
                 timeout=30,
             )
