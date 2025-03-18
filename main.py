@@ -55,7 +55,7 @@ class UnbCourseMonitor:
         )
         self.driver.execute_script("arguments[0].click();", search_button)
 
-    def get_available_courses(self, courses_dict: Dict[str, str]) -> List[Course]:
+    def get_available_courses(self, department: Dict) -> List[Course]:
         available_courses = []
         current_course = None
 
@@ -65,15 +65,18 @@ class UnbCourseMonitor:
             "contains(@class, 'linhaPar') or contains(@class, 'linhaImpar')]",
         )
 
+        subjects = {
+            subject["name"]: [c["number"] for c in subject["classes"]]
+            for subject in department["subjects"]
+        }
+
         for element in elements:
             class_name = element.get_attribute("class")
             if "agrupador" in class_name:
                 current_course = element.text.strip()
                 continue
 
-            if not current_course or not any(
-                key in current_course for key in courses_dict
-            ):
+            if not current_course or current_course not in subjects:
                 continue
 
             if "linha" not in class_name:
@@ -82,7 +85,7 @@ class UnbCourseMonitor:
             columns = element.find_elements(By.TAG_NAME, "td")
             class_number = columns[0].text.strip()
 
-            if class_number != courses_dict[current_course]:
+            if class_number not in subjects[current_course]:
                 continue
 
             total_seats = int(columns[5].text.strip())
@@ -102,33 +105,41 @@ class UnbCourseMonitor:
 
         return available_courses
 
-    def check_seats(
-        self, department: str, courses: Dict[str, str], user_email: str
-    ) -> None:
+    def check_seats(self, users_data: List[Dict]) -> None:
         try:
             self.driver.get("https://sigaa.unb.br/sigaa/public/turmas/listar.jsf")
-
             self.close_cookie_popup()
-            self.select_department(department)
+            for user in users_data:
+                email = user["email"]
+                for department in user["departments"]:
+                    dept_name = department["name"]
 
-            WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//table[@class='listagem']/tbody/tr")
-                )
-            )
+                    if not department["subjects"]:
+                        continue
 
-            available_courses = self.get_available_courses(courses)
+                    self.select_department(dept_name)
 
-            if available_courses:
-                messages = [
-                    self._format_course_message(course) for course in available_courses
-                ]
-                self.email_sender.send_email(
-                    user_email, messages, "Availabe Seats in Courses"
-                )
-                print("Email sent with available seats!")
-            else:
-                print("No available seats found in monitored courses.")
+                    WebDriverWait(self.driver, 15).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, "//table[@class='listagem']/tbody/tr")
+                        )
+                    )
+
+                    available_courses = self.get_available_courses(department)
+
+                    if available_courses:
+                        messages = [
+                            self._format_course_message(course)
+                            for course in available_courses
+                        ]
+                        self.email_sender.send_email(
+                            email, messages, "Available Seats in Courses"
+                        )
+                        print(f"Email sent with available seats to {email}!")
+                    else:
+                        print(
+                            f"No available seats found in monitored courses for {email}."
+                        )
 
         finally:
             if self.driver:
@@ -185,32 +196,24 @@ def main():
         raise ValueError("Admin token environment variable must be set")
 
     while True:
-        response = requests.get(
-            "http://localhost:3000/api/desiredClass",
-            cookies={"authjs.session-token": admin_token},
-            timeout=30,
-        )
+        try:
+            response = requests.get(
+                "http://localhost:3000/api/desiredClass",
+                cookies={"authjs.session-token": admin_token},
+                timeout=30,
+            )
 
-        if response.status_code != 200:
-            print(f"Error fetching data: {response.status_code}")
+            if response.status_code != 200:
+                print(f"Error fetching data: {response.status_code}")
+                time.sleep(300)
+                continue
+            users_data = response.json()
+            monitor.check_seats(users_data)
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
             time.sleep(300)
             continue
-
-        users_data = response.json()
-
-        for user in users_data:
-            email = user["email"]
-            for department in user["departments"]:
-                dept_name = department["name"]
-                courses = {}
-
-                for subject in department["subjects"]:
-                    subject_name = subject["name"]
-                    for class_info in subject["classes"]:
-                        courses[subject_name] = class_info["number"]
-
-                if courses:
-                    monitor.check_seats(dept_name, courses, email)
 
         time.sleep(300)
 
