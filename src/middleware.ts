@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
 
 export default async function middleware(request: NextRequest) {
-  const token = request.cookies.get("authjs.session-token");
+  const token = request.cookies.get("__Secure-authjs.session-token");
   const requestHeaders = new Headers(request.headers);
 
   // Check for admin first
@@ -23,7 +23,7 @@ export default async function middleware(request: NextRequest) {
       "http://localhost:3000/api/auth/session",
       {
         headers: {
-          Cookie: `authjs.session-token=${token.value}`,
+          Cookie: `__Secure-authjs.session-token=${token.value}`,
         },
       },
     );

@@ -199,7 +199,7 @@ def main():
         try:
             response = requests.get(
                 "http://localhost:3000/api/desiredClass",
-                cookies={"authjs.session-token": admin_token},
+                cookies={"__Secure-authjs.session-token": admin_token},
                 timeout=30,
             )
 
