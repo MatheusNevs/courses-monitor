@@ -195,27 +195,20 @@ def main():
     if not admin_token:
         raise ValueError("Admin token environment variable must be set")
 
-    while True:
-        try:
-            response = requests.get(
-                "http://localhost:3000/api/desiredClass",
-                cookies={"authjs.session-token": admin_token},
-                timeout=30,
-            )
+    try:
+        response = requests.get(
+            "http://localhost:3000/api/desiredClass",
+            cookies={"authjs.session-token": admin_token},
+            timeout=30,
+        )
 
-            if response.status_code != 200:
-                print(f"Error fetching data: {response.status_code}")
-                time.sleep(300)
-                continue
-            users_data = response.json()
-            monitor.check_seats(users_data)
+        if response.status_code != 200:
+            print(f"Error fetching data: {response.status_code}")
+        users_data = response.json()
+        monitor.check_seats(users_data)
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            time.sleep(300)
-            continue
-
-        time.sleep(300)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
