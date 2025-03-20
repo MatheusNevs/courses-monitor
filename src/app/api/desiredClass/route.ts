@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 
+export const dynamic = "force-dynamic";
+
 type UserWithClass = {
   email: string;
   departments: {
