@@ -5,8 +5,7 @@ A Python script to monitor course availability at University of Brasília (UnB).
 ## Features
 
 - Automatically checks for course openings
-- Sends notifications via Telegram bot
-- Configurable monitoring intervals
+- Sends notifications via Email
 - Supports multiple course tracking
 
 ## Technologies
@@ -37,7 +36,6 @@ The script will:
 
 - Monitor specified courses
 - Send notifications when spots become available
-- Continue running until manually stopped
 
 ## Requirements
 

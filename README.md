@@ -1,29 +1,58 @@
-# Create T3 App
+# UnB Course Monitor
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A web application to monitor and track course information at University of Brasília (UnB).
 
-## What's next? How do I make an app with this?
+## Project Overview
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+This project consists of two main components:
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+1. **Web Application** (T3 Stack)
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- Frontend: User interface to register desired courses and related information in the database
+- Backend: Database storing user information and API endpoints for user and Python script interactions
 
-## Learn More
+2. **Data Collection**
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+- Python web scraping script to monitor course availability and send email alerts to users
+- Periodic execution for real-time course data collection
+- Automated email notifications when tracked courses become available
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## Tech Stack
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+### Web Application
 
-## How do I deploy this?
+- [Next.js](https://nextjs.org) - React framework
+- [Prisma](https://prisma.io) - Database ORM - PostgreSQL (production) and MySQL (dev)
+- [NextAuth.js](https://next-auth.js.org) - Authentication
+- [Tailwind CSS](https://tailwindcss.com) - Styling
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### Data Collection
+
+- Python
+- Selenium (Webscraping)
+- MIMEText (Email sender)
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+cd webscraping
+pip install -r requirements.txt  # Depends on which Python environment manager you use
+```
+
+3. Configure environment variables for Web and Python Script
+4. Run the development server:
+
+```bash
+npm run dev
+```
+
+5. To run the Python Script:
+
+```bash
+cd webscraping
+python main.py
+```
